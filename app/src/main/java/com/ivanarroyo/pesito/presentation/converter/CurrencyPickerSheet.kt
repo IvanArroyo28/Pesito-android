@@ -32,7 +32,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.ivanarroyo.pesito.R
 import com.ivanarroyo.pesito.domain.model.Currency
-import com.ivanarroyo.pesito.domain.usecase.LoadConverterDataUseCase
+import com.ivanarroyo.pesito.domain.usecase.ObserveConverterDataUseCase
 import kotlinx.coroutines.launch
 import java.text.Normalizer
 
@@ -50,10 +50,10 @@ fun CurrencyPickerSheet(
     var query by rememberSaveable { mutableStateOf("") }
 
     val popular = remember(currencies) {
-        currencies.filter { it.code in LoadConverterDataUseCase.POPULAR }
+        currencies.filter { it.code in ObserveConverterDataUseCase.POPULAR }
     }
     val others = remember(currencies) {
-        currencies.filterNot { it.code in LoadConverterDataUseCase.POPULAR }
+        currencies.filterNot { it.code in ObserveConverterDataUseCase.POPULAR }
     }
     val results = remember(currencies, query) {
         val q = query.normalizeForSearch()

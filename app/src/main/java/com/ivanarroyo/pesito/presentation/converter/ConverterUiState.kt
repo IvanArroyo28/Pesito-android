@@ -6,9 +6,10 @@ import java.time.LocalDate
 
 sealed interface ConverterUiState {
 
+    /** Primera vez: no hay nada guardado y estamos descargando. */
     data object Loading : ConverterUiState
 
-    /** [isNetwork] = true si el problema es la conexión (mensaje distinto). */
+    /** No hay nada guardado Y falló la descarga. [isNetwork] = problema de conexión. */
     data class Error(val isNetwork: Boolean) : ConverterUiState
 
     data class Ready(
@@ -20,5 +21,9 @@ sealed interface ConverterUiState {
         /** Cuánto vale 1 [from] en [to]. */
         val unitRate: BigDecimal,
         val rateDate: LocalDate,
+        /** Se está descargando en segundo plano (muestra el indicador de "jalar para actualizar"). */
+        val isRefreshing: Boolean = false,
+        /** La última descarga falló: mostramos las tasas guardadas con un aviso. */
+        val isShowingSavedRates: Boolean = false,
     ) : ConverterUiState
 }

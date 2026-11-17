@@ -27,6 +27,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -66,7 +67,7 @@ fun ConverterRoute(viewModel: ConverterViewModel = hiltViewModel()) {
         onFromSelected = viewModel::onFromSelected,
         onToSelected = viewModel::onToSelected,
         onSwap = viewModel::onSwap,
-        onRetry = viewModel::refresh,
+        onRefresh = viewModel::refresh,
     )
 }
 
@@ -81,7 +82,7 @@ fun ConverterScreen(
     onFromSelected: (String) -> Unit,
     onToSelected: (String) -> Unit,
     onSwap: () -> Unit,
-    onRetry: () -> Unit,
+    onRefresh: () -> Unit,
 ) {
     Scaffold(
         topBar = {
@@ -97,7 +98,7 @@ fun ConverterScreen(
         ) {
             when (state) {
                 ConverterUiState.Loading -> LoadingContent()
-                is ConverterUiState.Error -> ErrorContent(state.isNetwork, onRetry)
+                is ConverterUiState.Error -> ErrorContent(state.isNetwork, onRefresh)
                 is ConverterUiState.Ready -> ReadyContent(
                     state = state,
                     amountText = amountText,
@@ -105,12 +106,14 @@ fun ConverterScreen(
                     onFromSelected = onFromSelected,
                     onToSelected = onToSelected,
                     onSwap = onSwap,
+                    onRefresh = onRefresh,
                 )
             }
         }
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ReadyContent(
     state: ConverterUiState.Ready,
@@ -119,84 +122,97 @@ private fun ReadyContent(
     onFromSelected: (String) -> Unit,
     onToSelected: (String) -> Unit,
     onSwap: () -> Unit,
+    onRefresh: () -> Unit,
 ) {
     var pickerTarget by rememberSaveable { mutableStateOf<PickerTarget?>(null) }
     var swapTurns by remember { mutableFloatStateOf(0f) }
     val swapRotation by animateFloatAsState(targetValue = swapTurns * 180f, label = "swap")
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
+    // Jalar hacia abajo para actualizar las tasas.
+    PullToRefreshBox(
+        isRefreshing = state.isRefreshing,
+        onRefresh = onRefresh,
+        modifier = Modifier.fillMaxSize(),
     ) {
-        // ---- Moneda de origen + monto ----
-        CurrencyCard(label = stringResource(R.string.from_label)) {
-            CurrencyChip(currency = state.from, onClick = { pickerTarget = PickerTarget.FROM })
-            Spacer(Modifier.size(12.dp))
-            OutlinedTextField(
-                value = amountText,
-                onValueChange = onAmountChange,
-                label = { Text(stringResource(R.string.amount_label)) },
-                prefix = { Text(state.from.symbol + " ") },
-                singleLine = true,
-                textStyle = MaterialTheme.typography.headlineSmall,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                modifier = Modifier.fillMaxWidth(),
-            )
-        }
-
-        // ---- Botón para intercambiar ----
-        FilledTonalIconButton(
-            onClick = {
-                swapTurns += 1f
-                onSwap()
-            },
+        Column(
             modifier = Modifier
-                .padding(vertical = 8.dp)
-                .size(52.dp),
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Icon(
-                painter = painterResource(R.drawable.ic_swap_vert),
-                contentDescription = stringResource(R.string.swap_cd),
-                modifier = Modifier.rotate(swapRotation),
-            )
-        }
+            if (state.isShowingSavedRates) {
+                SavedRatesBanner(MoneyFormat.formatDate(state.rateDate))
+                Spacer(Modifier.size(12.dp))
+            }
 
-        // ---- Moneda destino + resultado ----
-        CurrencyCard(
-            label = stringResource(R.string.to_label),
-            highlighted = true,
-        ) {
-            CurrencyChip(currency = state.to, onClick = { pickerTarget = PickerTarget.TO })
-            Spacer(Modifier.size(12.dp))
+            // ---- Moneda de origen + monto ----
+            CurrencyCard(label = stringResource(R.string.from_label)) {
+                CurrencyChip(currency = state.from, onClick = { pickerTarget = PickerTarget.FROM })
+                Spacer(Modifier.size(12.dp))
+                OutlinedTextField(
+                    value = amountText,
+                    onValueChange = onAmountChange,
+                    label = { Text(stringResource(R.string.amount_label)) },
+                    prefix = { Text(state.from.symbol + " ") },
+                    singleLine = true,
+                    textStyle = MaterialTheme.typography.headlineSmall,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+
+            // ---- Botón para intercambiar ----
+            FilledTonalIconButton(
+                onClick = {
+                    swapTurns += 1f
+                    onSwap()
+                },
+                modifier = Modifier
+                    .padding(vertical = 8.dp)
+                    .size(52.dp),
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_swap_vert),
+                    contentDescription = stringResource(R.string.swap_cd),
+                    modifier = Modifier.rotate(swapRotation),
+                )
+            }
+
+            // ---- Moneda destino + resultado ----
+            CurrencyCard(
+                label = stringResource(R.string.to_label),
+                highlighted = true,
+            ) {
+                CurrencyChip(currency = state.to, onClick = { pickerTarget = PickerTarget.TO })
+                Spacer(Modifier.size(12.dp))
+                Text(
+                    text = state.result?.let { "${state.to.symbol} ${MoneyFormat.format(it)}" } ?: "—",
+                    style = MaterialTheme.typography.headlineLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    maxLines = 2,
+                )
+            }
+
+            Spacer(Modifier.size(20.dp))
             Text(
-                text = state.result?.let { "${state.to.symbol} ${MoneyFormat.format(it)}" } ?: "—",
-                style = MaterialTheme.typography.headlineLarge,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                maxLines = 2,
+                text = stringResource(
+                    R.string.unit_rate,
+                    state.from.code,
+                    MoneyFormat.format(state.unitRate),
+                    state.to.code,
+                ),
+                style = MaterialTheme.typography.titleMedium,
+                textAlign = TextAlign.Center,
+            )
+            Text(
+                text = stringResource(R.string.rate_date, MoneyFormat.formatDate(state.rateDate)),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
             )
         }
-
-        Spacer(Modifier.size(20.dp))
-        Text(
-            text = stringResource(
-                R.string.unit_rate,
-                state.from.code,
-                MoneyFormat.format(state.unitRate),
-                state.to.code,
-            ),
-            style = MaterialTheme.typography.titleMedium,
-            textAlign = TextAlign.Center,
-        )
-        Text(
-            text = stringResource(R.string.rate_date, MoneyFormat.formatDate(state.rateDate)),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-        )
     }
 
     pickerTarget?.let { target ->
@@ -207,6 +223,23 @@ private fun ReadyContent(
                 if (target == PickerTarget.FROM) onFromSelected(code) else onToSelected(code)
             },
             onDismiss = { pickerTarget = null },
+        )
+    }
+}
+
+/** Aviso cuando no hay internet: la app sigue funcionando con lo guardado. */
+@Composable
+private fun SavedRatesBanner(date: String) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.tertiaryContainer,
+        contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+    ) {
+        Text(
+            text = stringResource(R.string.saved_rates_banner, date),
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
         )
     }
 }
@@ -320,13 +353,14 @@ private fun ConverterReadyPreview() {
                 result = BigDecimal("329328.00"),
                 unitRate = BigDecimal("3293.28"),
                 rateDate = LocalDate.of(2026, 11, 13),
+                isShowingSavedRates = true,
             ),
             amountText = "100",
             onAmountChange = {},
             onFromSelected = {},
             onToSelected = {},
             onSwap = {},
-            onRetry = {},
+            onRefresh = {},
         )
     }
 }
@@ -342,7 +376,7 @@ private fun ConverterErrorPreview() {
             onFromSelected = {},
             onToSelected = {},
             onSwap = {},
-            onRetry = {},
+            onRefresh = {},
         )
     }
 }

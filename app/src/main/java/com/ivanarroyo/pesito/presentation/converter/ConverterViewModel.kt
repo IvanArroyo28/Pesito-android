@@ -7,14 +7,17 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ivanarroyo.pesito.domain.usecase.ConvertCurrencyUseCase
 import com.ivanarroyo.pesito.domain.usecase.ConverterData
-import com.ivanarroyo.pesito.domain.usecase.LoadConverterDataUseCase
+import com.ivanarroyo.pesito.domain.usecase.ObserveConverterDataUseCase
+import com.ivanarroyo.pesito.domain.usecase.RefreshRatesUseCase
 import com.ivanarroyo.pesito.presentation.util.AmountInput
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.io.IOException
 import java.math.BigDecimal
@@ -22,7 +25,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ConverterViewModel @Inject constructor(
-    private val loadConverterData: LoadConverterDataUseCase,
+    observeConverterData: ObserveConverterDataUseCase,
+    private val refreshRates: RefreshRatesUseCase,
     private val convertCurrency: ConvertCurrencyUseCase,
 ) : ViewModel() {
 
@@ -36,14 +40,22 @@ class ConverterViewModel @Inject constructor(
     private val amount = MutableStateFlow(AmountInput.parse(DEFAULT_AMOUNT))
     private val fromCode = MutableStateFlow(DEFAULT_FROM)
     private val toCode = MutableStateFlow(DEFAULT_TO)
-    private val loadState = MutableStateFlow<LoadState>(LoadState.Loading)
+    private val refreshState = MutableStateFlow(RefreshState(isRefreshing = true))
+    private var refreshJob: Job? = null
 
     val uiState: StateFlow<ConverterUiState> =
-        combine(loadState, fromCode, toCode, amount) { load, from, to, amount ->
-            when (load) {
-                LoadState.Loading -> ConverterUiState.Loading
-                is LoadState.Failed -> ConverterUiState.Error(load.isNetwork)
-                is LoadState.Loaded -> buildReady(load.data, from, to, amount)
+        combine(
+            observeConverterData(), // lo guardado en Room
+            refreshState,           // cómo va la descarga
+            fromCode,
+            toCode,
+            amount,
+        ) { data, refresh, from, to, amount ->
+            when {
+                // Hay datos guardados: SIEMPRE los mostramos, haya internet o no.
+                data != null -> buildReady(data, refresh, from, to, amount)
+                refresh.failure != null -> ConverterUiState.Error(refresh.failure == Failure.NETWORK)
+                else -> ConverterUiState.Loading
             }
         }.stateIn(
             scope = viewModelScope,
@@ -56,12 +68,13 @@ class ConverterViewModel @Inject constructor(
     }
 
     fun refresh() {
-        viewModelScope.launch {
-            loadState.value = LoadState.Loading
-            loadState.value = loadConverterData().fold(
-                onSuccess = { LoadState.Loaded(it) },
-                onFailure = { LoadState.Failed(isNetwork = it is IOException) },
-            )
+        if (refreshJob?.isActive == true) return // ya hay una descarga en curso
+        refreshJob = viewModelScope.launch {
+            refreshState.update { it.copy(isRefreshing = true) }
+            val failure = refreshRates().exceptionOrNull()?.let {
+                if (it is IOException) Failure.NETWORK else Failure.OTHER
+            }
+            refreshState.value = RefreshState(isRefreshing = false, failure = failure)
         }
     }
 
@@ -87,6 +100,7 @@ class ConverterViewModel @Inject constructor(
 
     private fun buildReady(
         data: ConverterData,
+        refresh: RefreshState,
         fromCode: String,
         toCode: String,
         amount: BigDecimal?,
@@ -104,14 +118,17 @@ class ConverterViewModel @Inject constructor(
             result = amount?.let { convertCurrency(data.snapshot, it, from.code, to.code) },
             unitRate = unitRate,
             rateDate = data.snapshot.date,
+            isRefreshing = refresh.isRefreshing,
+            isShowingSavedRates = refresh.failure != null,
         )
     }
 
-    private sealed interface LoadState {
-        data object Loading : LoadState
-        data class Failed(val isNetwork: Boolean) : LoadState
-        data class Loaded(val data: ConverterData) : LoadState
-    }
+    private enum class Failure { NETWORK, OTHER }
+
+    private data class RefreshState(
+        val isRefreshing: Boolean = false,
+        val failure: Failure? = null,
+    )
 
     companion object {
         const val DEFAULT_AMOUNT = "1"

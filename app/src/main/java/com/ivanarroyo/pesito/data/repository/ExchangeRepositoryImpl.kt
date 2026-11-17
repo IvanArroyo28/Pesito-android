@@ -1,43 +1,43 @@
 package com.ivanarroyo.pesito.data.repository
 
-import com.ivanarroyo.pesito.data.mapper.toDomainOrNull
-import com.ivanarroyo.pesito.data.mapper.toSnapshot
+import com.ivanarroyo.pesito.data.local.ExchangeDao
+import com.ivanarroyo.pesito.data.mapper.toDomain
+import com.ivanarroyo.pesito.data.mapper.toEntities
+import com.ivanarroyo.pesito.data.mapper.toEntityOrNull
+import com.ivanarroyo.pesito.data.mapper.toSnapshotOrNull
 import com.ivanarroyo.pesito.data.remote.FrankfurterApi
 import com.ivanarroyo.pesito.domain.model.Currency
 import com.ivanarroyo.pesito.domain.model.RatesSnapshot
 import com.ivanarroyo.pesito.domain.repository.ExchangeRepository
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 
 /**
- * Versión "solo red" con caché en memoria.
- * En la Fase 3 la reemplazamos por una que guarda en Room y funciona sin internet.
+ * La pantalla SOLO lee de Room. La red solo sirve para llenar Room.
+ * Si no hay internet, refresh() falla pero la app sigue mostrando lo último guardado.
  */
 class ExchangeRepositoryImpl @Inject constructor(
     private val api: FrankfurterApi,
+    private val dao: ExchangeDao,
 ) : ExchangeRepository {
 
-    private val mutex = Mutex()
-    private var currencies: List<Currency>? = null
-    private var snapshot: RatesSnapshot? = null
+    override fun observeCurrencies(): Flow<List<Currency>> =
+        dao.observeCurrencies().map { rows -> rows.map { it.toDomain() } }
 
-    override suspend fun getCurrencies(): Result<List<Currency>> = safeCall {
-        mutex.withLock {
-            currencies ?: api.getCurrencies().mapNotNull { it.toDomainOrNull() }.also { currencies = it }
-        }
-    }
+    override fun observeLatestRates(): Flow<RatesSnapshot?> =
+        dao.observeRates().map { it.toSnapshotOrNull() }
 
-    override suspend fun getLatestRates(): Result<RatesSnapshot> = safeCall {
-        mutex.withLock {
-            snapshot ?: api.getLatestRates().toSnapshot().also { snapshot = it }
-        }
-    }
-
-    private inline fun <T> safeCall(block: () -> T): Result<T> =
+    override suspend fun refresh(): Result<Unit> =
         try {
-            Result.success(block())
+            val currencies = api.getCurrencies().mapNotNull { it.toEntityOrNull() }
+            val rates = api.getLatestRates().toEntities()
+            // Si la API respondiera vacío, no borramos lo que ya teníamos.
+            if (currencies.isNotEmpty() && rates.isNotEmpty()) {
+                dao.replaceAll(currencies, rates)
+            }
+            Result.success(Unit)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {

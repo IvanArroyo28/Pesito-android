@@ -3,22 +3,25 @@ package com.ivanarroyo.pesito.domain.usecase
 import com.ivanarroyo.pesito.domain.model.Currency
 import com.ivanarroyo.pesito.domain.model.RatesSnapshot
 import com.ivanarroyo.pesito.domain.repository.ExchangeRepository
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
+import org.junit.Assert.assertNull
 import org.junit.Test
-import java.io.IOException
 import java.math.BigDecimal
 import java.time.LocalDate
 
-class LoadConverterDataUseCaseTest {
+class ObserveConverterDataUseCaseTest {
 
     private class FakeRepository(
-        private val currencies: Result<List<Currency>>,
-        private val rates: Result<RatesSnapshot>,
+        private val currencies: List<Currency>,
+        private val snapshot: RatesSnapshot?,
     ) : ExchangeRepository {
-        override suspend fun getCurrencies() = currencies
-        override suspend fun getLatestRates() = rates
+        override fun observeCurrencies(): Flow<List<Currency>> = flowOf(currencies)
+        override fun observeLatestRates(): Flow<RatesSnapshot?> = flowOf(snapshot)
+        override suspend fun refresh(): Result<Unit> = Result.success(Unit)
     }
 
     private val snapshot = RatesSnapshot(
@@ -41,23 +44,17 @@ class LoadConverterDataUseCaseTest {
 
     @Test
     fun `puts popular currencies first and drops currencies without rate`() = runBlocking {
-        val useCase = LoadConverterDataUseCase(
-            FakeRepository(Result.success(currencies), Result.success(snapshot)),
-        )
+        val useCase = ObserveConverterDataUseCase(FakeRepository(currencies, snapshot))
 
-        val data = useCase().getOrThrow()
+        val data = useCase().first()!!
 
         assertEquals(listOf("COP", "USD", "EUR", "JPY"), data.currencies.map { it.code })
     }
 
     @Test
-    fun `propagates the error`() = runBlocking {
-        val useCase = LoadConverterDataUseCase(
-            FakeRepository(Result.success(currencies), Result.failure(IOException("sin red"))),
-        )
+    fun `emits null when nothing is saved yet`() = runBlocking {
+        val useCase = ObserveConverterDataUseCase(FakeRepository(emptyList(), null))
 
-        val result = useCase()
-
-        assertTrue(result.exceptionOrNull() is IOException)
+        assertNull(useCase().first())
     }
 }

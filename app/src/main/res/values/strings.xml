@@ -12,6 +12,7 @@
     <string name="error_network">Sin conexión. Revisa tu internet e inténtalo de nuevo.</string>
     <string name="error_generic">No pudimos cargar las tasas. Inténtalo de nuevo.</string>
     <string name="retry">Reintentar</string>
+    <string name="saved_rates_banner">Sin conexión. Mostrando las tasas guardadas del %1$s. Jala hacia abajo para actualizar.</string>
 
     <!-- Selector de moneda -->
     <string name="picker_title">Elige una moneda</string>
