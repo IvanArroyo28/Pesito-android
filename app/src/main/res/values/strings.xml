@@ -1,4 +1,23 @@
 <resources>
     <string name="app_name">Pesito</string>
-    <string name="home_placeholder">Conversor de monedas · peso colombiano</string>
+
+    <!-- Conversor -->
+    <string name="from_label">Tienes</string>
+    <string name="to_label">Recibes</string>
+    <string name="amount_label">Monto</string>
+    <string name="swap_cd">Intercambiar monedas</string>
+    <string name="unit_rate">1 %1$s = %2$s %3$s</string>
+    <string name="rate_date">Tasa del %1$s · fuente: Frankfurter</string>
+    <string name="loading_rates">Cargando tasas…</string>
+    <string name="error_network">Sin conexión. Revisa tu internet e inténtalo de nuevo.</string>
+    <string name="error_generic">No pudimos cargar las tasas. Inténtalo de nuevo.</string>
+    <string name="retry">Reintentar</string>
+
+    <!-- Selector de moneda -->
+    <string name="picker_title">Elige una moneda</string>
+    <string name="picker_search">Buscar por nombre o código</string>
+    <string name="picker_popular">Populares</string>
+    <string name="picker_all">Todas</string>
+    <string name="picker_empty">No encontramos \"%1$s\"</string>
+    <string name="clear_cd">Borrar búsqueda</string>
 </resources>
