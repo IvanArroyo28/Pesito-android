@@ -25,6 +25,19 @@
             </intent-filter>
         </activity>
 
+        <!-- Widget de pantalla de inicio (Fase 7) -->
+        <receiver
+            android:name=".presentation.widget.PesitoWidgetReceiver"
+            android:exported="true"
+            android:label="@string/widget_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/pesito_widget_info" />
+        </receiver>
+
         <!--
             WorkManager se inicia solo por defecto. Lo apagamos aquí porque PesitoApp
             lo configura a mano con la fábrica de Hilt (para que los Workers reciban

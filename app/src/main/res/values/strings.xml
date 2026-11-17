@@ -49,4 +49,11 @@
     <string name="stat_max">Máximo</string>
     <string name="chart_hint">Desliza el dedo sobre la gráfica para ver la tasa de cada día.</string>
     <string name="chart_cd">Gráfica de %1$s a %2$s. Mínimo %3$s, máximo %4$s.</string>
+
+    <!-- Widget -->
+    <string name="widget_name">Pesito · tasas</string>
+    <string name="widget_description">Tus monedas favoritas en la pantalla de inicio.</string>
+    <string name="widget_no_data">Abre Pesito con internet para descargar las tasas.</string>
+    <string name="widget_refresh_cd">Actualizar tasas</string>
+    <string name="widget_rate_date">Tasa del %1$s</string>
 </resources>
