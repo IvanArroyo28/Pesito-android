@@ -2,7 +2,9 @@ package com.ivanarroyo.pesito.di
 
 import android.content.Context
 import androidx.room.Room
+import com.ivanarroyo.pesito.data.local.AlertDao
 import com.ivanarroyo.pesito.data.local.ExchangeDao
+import com.ivanarroyo.pesito.data.local.MIGRATION_2_3
 import com.ivanarroyo.pesito.data.local.PesitoDatabase
 import dagger.Module
 import dagger.Provides
@@ -19,12 +21,14 @@ object DatabaseModule {
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): PesitoDatabase =
         Room.databaseBuilder(context, PesitoDatabase::class.java, PesitoDatabase.NAME)
-            // La base de datos es solo una copia de la API: si cambia su estructura,
-            // la borramos y se vuelve a llenar en la próxima descarga. No se pierde nada del usuario
-            // (sus favoritas viven en DataStore).
-            .fallbackToDestructiveMigration(dropAllTables = true)
+            .addMigrations(MIGRATION_2_3)
+            // Solo desde la v1 (antes de que hubiera datos del usuario) se permite borrar todo.
+            .fallbackToDestructiveMigrationFrom(dropAllTables = true, 1)
             .build()
 
     @Provides
     fun provideExchangeDao(database: PesitoDatabase): ExchangeDao = database.exchangeDao()
+
+    @Provides
+    fun provideAlertDao(database: PesitoDatabase): AlertDao = database.alertDao()
 }

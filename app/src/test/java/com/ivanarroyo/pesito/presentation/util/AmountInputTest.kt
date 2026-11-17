@@ -30,4 +30,8 @@ class AmountInputTest {
         assertNull(AmountInput.parse(""))
         assertNull(AmountInput.parse(","))
     }
+
+    @Test
+    fun `alerts can use more decimals`() =
+        assertEquals("0,000312", AmountInput.sanitize("0.000312", maxDecimals = 6))
 }

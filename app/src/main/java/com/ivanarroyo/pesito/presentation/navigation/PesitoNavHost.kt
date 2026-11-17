@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.ivanarroyo.pesito.presentation.alerts.AlertsRoute
 import com.ivanarroyo.pesito.presentation.converter.ConverterRoute
 import com.ivanarroyo.pesito.presentation.history.HistoryRoute
 import kotlinx.serialization.Serializable
@@ -15,6 +16,10 @@ data object ConverterDestination
 @Serializable
 data class HistoryDestination(val from: String, val to: String)
 
+/** from/to: el par con el que se crearán las alertas nuevas. */
+@Serializable
+data class AlertsDestination(val from: String, val to: String)
+
 @Composable
 fun PesitoNavHost() {
     val navController = rememberNavController()
@@ -23,10 +28,14 @@ fun PesitoNavHost() {
         composable<ConverterDestination> {
             ConverterRoute(
                 onOpenHistory = { from, to -> navController.navigate(HistoryDestination(from, to)) },
+                onOpenAlerts = { from, to -> navController.navigate(AlertsDestination(from, to)) },
             )
         }
         composable<HistoryDestination> {
             HistoryRoute(onBack = { navController.popBackStack() })
+        }
+        composable<AlertsDestination> {
+            AlertsRoute(onBack = { navController.popBackStack() })
         }
     }
 }

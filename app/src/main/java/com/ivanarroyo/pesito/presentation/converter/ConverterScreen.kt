@@ -25,6 +25,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -63,6 +64,7 @@ import java.time.LocalDate
 @Composable
 fun ConverterRoute(
     onOpenHistory: (from: String, to: String) -> Unit,
+    onOpenAlerts: (from: String, to: String) -> Unit,
     viewModel: ConverterViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -76,6 +78,7 @@ fun ConverterRoute(
         onRefresh = viewModel::refresh,
         onToggleFavorite = viewModel::onToggleFavorite,
         onOpenHistory = onOpenHistory,
+        onOpenAlerts = onOpenAlerts,
     )
 }
 
@@ -93,11 +96,20 @@ fun ConverterScreen(
     onRefresh: () -> Unit,
     onToggleFavorite: (String) -> Unit,
     onOpenHistory: (from: String, to: String) -> Unit,
+    onOpenAlerts: (from: String, to: String) -> Unit,
 ) {
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
                 title = { Text(stringResource(R.string.app_name), fontWeight = FontWeight.Bold) },
+                actions = {
+                    // Las alertas se crean para el par que tienes en pantalla.
+                    if (state is ConverterUiState.Ready) {
+                        IconButton(onClick = { onOpenAlerts(state.from.code, state.to.code) }) {
+                            Icon(painterResource(R.drawable.ic_notifications), stringResource(R.string.alerts_title))
+                        }
+                    }
+                },
             )
         },
     ) { padding ->
@@ -467,6 +479,7 @@ private fun ConverterReadyPreview() {
             onRefresh = {},
             onToggleFavorite = {},
             onOpenHistory = { _, _ -> },
+            onOpenAlerts = { _, _ -> },
         )
     }
 }
@@ -485,6 +498,7 @@ private fun ConverterErrorPreview() {
             onRefresh = {},
             onToggleFavorite = {},
             onOpenHistory = { _, _ -> },
+            onOpenAlerts = { _, _ -> },
         )
     }
 }

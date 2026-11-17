@@ -11,8 +11,11 @@ object AmountInput {
     private const val MAX_INTEGER_DIGITS = 12
     private const val MAX_DECIMALS = 2
 
-    /** Devuelve el texto limpio, o null si lo escrito no es válido (y se ignora). */
-    fun sanitize(raw: String): String? {
+    /**
+     * Devuelve el texto limpio, o null si lo escrito no es válido (y se ignora).
+     * [maxDecimals]: 2 para montos; más para el valor de una alerta (1 COP = 0,000303 USD).
+     */
+    fun sanitize(raw: String, maxDecimals: Int = MAX_DECIMALS): String? {
         val text = raw.trim().replace('.', ',')
         if (text.isEmpty()) return ""
         if (text.any { !it.isDigit() && it != ',' }) return null
@@ -21,7 +24,7 @@ object AmountInput {
         val integerPart = text.substringBefore(',')
         val decimalPart = text.substringAfter(',', missingDelimiterValue = "")
         if (integerPart.length > MAX_INTEGER_DIGITS) return null
-        if (decimalPart.length > MAX_DECIMALS) return null
+        if (decimalPart.length > maxDecimals) return null
         return text
     }
 

@@ -56,4 +56,30 @@
     <string name="widget_no_data">Abre Pesito con internet para descargar las tasas.</string>
     <string name="widget_refresh_cd">Actualizar tasas</string>
     <string name="widget_rate_date">Tasa del %1$s</string>
+
+    <!-- Alertas -->
+    <string name="alerts_title">Alertas</string>
+    <string name="alert_new">Nueva alerta</string>
+    <string name="alerts_today">Hoy: 1 %1$s = %2$s %3$s</string>
+    <string name="alerts_empty">Aún no tienes alertas. Crea una y te avisamos cuando el %1$s llegue al valor que quieres.</string>
+    <string name="alerts_permission_text">Para avisarte necesitamos permiso para enviar notificaciones.</string>
+    <string name="alerts_permission_allow">Permitir notificaciones</string>
+    <string name="alerts_permission_settings">Abrir ajustes</string>
+    <string name="alert_rule_below">Avísame si baja de %1$s %2$s</string>
+    <string name="alert_rule_above">Avísame si sube de %1$s %2$s</string>
+    <string name="alert_inactive">Desactivada (ya se cumplió o la apagaste)</string>
+    <string name="alert_today_short">Hoy: %1$s</string>
+    <string name="alert_delete_cd">Eliminar alerta</string>
+    <string name="alert_dialog_title">Nueva alerta %1$s → %2$s</string>
+    <string name="alert_dialog_question">¿Cuándo te avisamos sobre 1 %1$s?</string>
+    <string name="alert_direction_below">Si baja de</string>
+    <string name="alert_direction_above">Si sube de</string>
+    <string name="alert_target_label">Valor</string>
+    <string name="alert_save">Guardar</string>
+    <string name="alert_cancel">Cancelar</string>
+    <string name="alert_channel_name">Alertas de tasa</string>
+    <string name="alert_channel_description">Avisos cuando una moneda llega al valor que elegiste.</string>
+    <string name="alert_notification_title">%1$s → %2$s llegó a tu meta</string>
+    <string name="alert_notification_below">1 %1$s = %2$s %3$s. Tu alerta: menos de %4$s.</string>
+    <string name="alert_notification_above">1 %1$s = %2$s %3$s. Tu alerta: más de %4$s.</string>
 </resources>
