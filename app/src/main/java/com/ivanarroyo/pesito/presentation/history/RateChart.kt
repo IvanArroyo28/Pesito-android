@@ -54,6 +54,7 @@ fun RateChart(
     val guideColor = MaterialTheme.colorScheme.outline
     val dotCenterColor = MaterialTheme.colorScheme.surface
     val shown = points[selectedIndex ?: points.lastIndex]
+    val showYear = points.first().date.year != points.last().date.year
 
     Column(modifier) {
         // Encabezado: el punto que se está tocando (o el último si no se toca nada).
@@ -156,13 +157,13 @@ fun RateChart(
         // Fechas de inicio y fin bajo la gráfica.
         Row(Modifier.fillMaxWidth()) {
             Text(
-                text = MoneyFormat.formatShortDate(points.first().date),
+                text = MoneyFormat.formatShortDate(points.first().date, showYear),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Spacer(Modifier.weight(1f))
             Text(
-                text = MoneyFormat.formatShortDate(points.last().date),
+                text = MoneyFormat.formatShortDate(points.last().date, showYear),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

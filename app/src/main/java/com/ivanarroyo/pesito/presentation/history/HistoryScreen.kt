@@ -175,6 +175,7 @@ private fun LoadedContent(state: HistoryUiState, history: RateHistory) {
     Spacer(Modifier.size(16.dp))
 
     // ---- Números clave del periodo ----
+    val showYear = history.first.date.year != history.last.date.year
     val change = history.changePercent
     val changeColor = when (change.signum()) {
         1 -> RateUp
@@ -191,13 +192,13 @@ private fun LoadedContent(state: HistoryUiState, history: RateHistory) {
         StatCard(
             label = stringResource(R.string.stat_min),
             value = MoneyFormat.format(history.min.rate),
-            detail = MoneyFormat.formatShortDate(history.min.date),
+            detail = MoneyFormat.formatShortDate(history.min.date, showYear),
             modifier = Modifier.weight(1f),
         )
         StatCard(
             label = stringResource(R.string.stat_max),
             value = MoneyFormat.format(history.max.rate),
-            detail = MoneyFormat.formatShortDate(history.max.date),
+            detail = MoneyFormat.formatShortDate(history.max.date, showYear),
             modifier = Modifier.weight(1f),
         )
     }

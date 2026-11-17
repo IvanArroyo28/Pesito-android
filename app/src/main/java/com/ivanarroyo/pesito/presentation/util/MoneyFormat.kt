@@ -55,6 +55,11 @@ object MoneyFormat {
     fun formatDateTime(instant: Instant, zone: ZoneId = ZoneId.systemDefault()): String =
         dateTimeFormatter.format(instant.atZone(zone))
 
-    /** "13 nov" para los ejes de la gráfica. */
-    fun formatShortDate(date: LocalDate): String = shortDateFormatter.format(date)
+    /**
+     * "13 nov" para los ejes de la gráfica.
+     * [withYear] = true cuando el periodo cruza de un año a otro ("17 nov 2025"),
+     * si no, "17 nov" al inicio y al final de la gráfica de 1 año sería ambiguo.
+     */
+    fun formatShortDate(date: LocalDate, withYear: Boolean = false): String =
+        if (withYear) dateFormatter.format(date) else shortDateFormatter.format(date)
 }
