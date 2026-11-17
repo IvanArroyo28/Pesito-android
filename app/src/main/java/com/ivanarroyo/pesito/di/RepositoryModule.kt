@@ -2,7 +2,9 @@ package com.ivanarroyo.pesito.di
 
 import com.ivanarroyo.pesito.data.preferences.DataStorePreferencesRepository
 import com.ivanarroyo.pesito.data.repository.ExchangeRepositoryImpl
+import com.ivanarroyo.pesito.data.repository.HistoryRepositoryImpl
 import com.ivanarroyo.pesito.domain.repository.ExchangeRepository
+import com.ivanarroyo.pesito.domain.repository.HistoryRepository
 import com.ivanarroyo.pesito.domain.repository.PreferencesRepository
 import dagger.Binds
 import dagger.Module
@@ -21,4 +23,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindPreferencesRepository(impl: DataStorePreferencesRepository): PreferencesRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindHistoryRepository(impl: HistoryRepositoryImpl): HistoryRepository
 }

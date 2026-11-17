@@ -21,4 +21,10 @@ class MoneyFormatTest {
     @Test
     fun `zero shows two decimals`() =
         assertEquals("0,00", MoneyFormat.format(BigDecimal.ZERO))
+
+    @Test
+    fun `percent always shows the sign`() {
+        assertEquals("+2,35 %", MoneyFormat.formatPercent(BigDecimal("2.35")))
+        assertEquals("-1,10 %", MoneyFormat.formatPercent(BigDecimal("-1.1")))
+    }
 }

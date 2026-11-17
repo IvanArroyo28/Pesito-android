@@ -4,7 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import com.ivanarroyo.pesito.presentation.converter.ConverterRoute
+import com.ivanarroyo.pesito.presentation.navigation.PesitoNavHost
 import com.ivanarroyo.pesito.ui.theme.PesitoTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -15,7 +15,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             PesitoTheme {
-                ConverterRoute()
+                PesitoNavHost()
             }
         }
     }

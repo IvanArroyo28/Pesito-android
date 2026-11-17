@@ -35,5 +35,17 @@ object MoneyFormat {
         }
     }
 
+    /** +2,35 % / −1,10 % (siempre con signo, para que se note si subió o bajó). */
+    fun formatPercent(value: BigDecimal): String =
+        // El % va entre comillas: sin ellas DecimalFormat multiplicaría el número por 100.
+        DecimalFormat("+#,##0.00 '%';-#,##0.00 '%'", symbols).apply { roundingMode = RoundingMode.HALF_EVEN }
+            .format(value)
+
     fun formatDate(date: LocalDate): String = dateFormatter.format(date)
+
+    private val shortDateFormatter: DateTimeFormatter =
+        DateTimeFormatter.ofPattern("d MMM", Locale.forLanguageTag("es-CO"))
+
+    /** "13 nov" para los ejes de la gráfica. */
+    fun formatShortDate(date: LocalDate): String = shortDateFormatter.format(date)
 }

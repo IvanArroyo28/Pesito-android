@@ -28,4 +28,24 @@
     <!-- Favoritas en la pantalla principal -->
     <string name="favorites_title">Tus favoritas</string>
     <string name="favorites_empty">Toca la ★ junto a una moneda en el selector para verla aquí.</string>
+
+    <!-- Historial -->
+    <string name="open_history">Ver historial</string>
+    <string name="history_title">Historial %1$s → %2$s</string>
+    <string name="back_cd">Volver</string>
+    <string name="range_month">1 mes</string>
+    <string name="range_quarter">3 meses</string>
+    <string name="range_year">1 año</string>
+    <string name="source_average">Promedio</string>
+    <string name="source_banrep">TRM BanRep</string>
+    <string name="source_average_info">Promedio de varios bancos centrales (Frankfurter).</string>
+    <string name="source_banrep_info">Tasa Representativa del Mercado publicada por el Banco de la República.</string>
+    <string name="source_banrep_unavailable">La TRM del BanRep solo existe para dólar ↔ peso colombiano.</string>
+    <string name="history_empty">No hay datos para este periodo.</string>
+    <string name="history_error_network">El historial necesita internet. Revisa tu conexión e inténtalo de nuevo.</string>
+    <string name="stat_change">Cambio</string>
+    <string name="stat_min">Mínimo</string>
+    <string name="stat_max">Máximo</string>
+    <string name="chart_hint">Desliza el dedo sobre la gráfica para ver la tasa de cada día.</string>
+    <string name="chart_cd">Gráfica de %1$s a %2$s. Mínimo %3$s, máximo %4$s.</string>
 </resources>

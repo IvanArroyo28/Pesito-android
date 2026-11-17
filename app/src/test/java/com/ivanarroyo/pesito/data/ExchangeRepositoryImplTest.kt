@@ -54,6 +54,14 @@ class ExchangeRepositoryImplTest {
             if (offline) throw IOException("sin internet")
             return listOf(RateDto("2026-11-13", "USD", "COP", BigDecimal(copRate)))
         }
+
+        override suspend fun getRateHistory(
+            base: String,
+            quotes: String,
+            from: String,
+            to: String,
+            providers: String?,
+        ): List<RateDto> = emptyList()
     }
 
     @Test

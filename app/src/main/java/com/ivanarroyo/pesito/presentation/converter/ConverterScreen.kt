@@ -31,6 +31,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -60,7 +61,10 @@ import java.time.LocalDate
 
 /** Conecta el ViewModel con la pantalla. La pantalla en sí no sabe que existe Hilt. */
 @Composable
-fun ConverterRoute(viewModel: ConverterViewModel = hiltViewModel()) {
+fun ConverterRoute(
+    onOpenHistory: (from: String, to: String) -> Unit,
+    viewModel: ConverterViewModel = hiltViewModel(),
+) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     ConverterScreen(
         state = state,
@@ -71,6 +75,7 @@ fun ConverterRoute(viewModel: ConverterViewModel = hiltViewModel()) {
         onSwap = viewModel::onSwap,
         onRefresh = viewModel::refresh,
         onToggleFavorite = viewModel::onToggleFavorite,
+        onOpenHistory = onOpenHistory,
     )
 }
 
@@ -87,6 +92,7 @@ fun ConverterScreen(
     onSwap: () -> Unit,
     onRefresh: () -> Unit,
     onToggleFavorite: (String) -> Unit,
+    onOpenHistory: (from: String, to: String) -> Unit,
 ) {
     Scaffold(
         topBar = {
@@ -112,6 +118,7 @@ fun ConverterScreen(
                     onSwap = onSwap,
                     onRefresh = onRefresh,
                     onToggleFavorite = onToggleFavorite,
+                    onOpenHistory = onOpenHistory,
                 )
             }
         }
@@ -129,6 +136,7 @@ private fun ReadyContent(
     onSwap: () -> Unit,
     onRefresh: () -> Unit,
     onToggleFavorite: (String) -> Unit,
+    onOpenHistory: (from: String, to: String) -> Unit,
 ) {
     var pickerTarget by rememberSaveable { mutableStateOf<PickerTarget?>(null) }
     var swapTurns by remember { mutableFloatStateOf(0f) }
@@ -218,6 +226,11 @@ private fun ReadyContent(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
             )
+            TextButton(onClick = { onOpenHistory(state.from.code, state.to.code) }) {
+                Icon(painterResource(R.drawable.ic_show_chart), contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text(stringResource(R.string.open_history))
+            }
 
             // ---- Favoritas: el mismo monto en varias monedas de un vistazo ----
             Spacer(Modifier.size(24.dp))
@@ -445,6 +458,7 @@ private fun ConverterReadyPreview() {
             onSwap = {},
             onRefresh = {},
             onToggleFavorite = {},
+            onOpenHistory = { _, _ -> },
         )
     }
 }
@@ -462,6 +476,7 @@ private fun ConverterErrorPreview() {
             onSwap = {},
             onRefresh = {},
             onToggleFavorite = {},
+            onOpenHistory = { _, _ -> },
         )
     }
 }
