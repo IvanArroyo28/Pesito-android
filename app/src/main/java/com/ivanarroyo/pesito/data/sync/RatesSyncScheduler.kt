@@ -16,7 +16,7 @@ import javax.inject.Singleton
 
 @Singleton
 class RatesSyncScheduler @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
 ) {
     private val needsInternet = Constraints.Builder()
         .setRequiredNetworkType(NetworkType.CONNECTED)

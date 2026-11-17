@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Versión de un solo color para los "íconos temáticos" de Android 13+.
+    El sistema la pinta con los colores del fondo de pantalla (solo importa la forma).
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Al 88 %: así todo queda dentro de la zona segura (radio 33). -->
+    <group
+        android:pivotX="54"
+        android:pivotY="54"
+        android:scaleX="0.88"
+        android:scaleY="0.88">
+        <path
+            android:pathData="M26.75,44.08 A29,29 0 0,1 79.9,41.6"
+            android:strokeWidth="4"
+            android:strokeColor="#FFFFFFFF"
+            android:strokeLineCap="round" />
+        <path
+            android:pathData="M81.25,63.92 A29,29 0 0,1 28.1,66.4"
+            android:strokeWidth="4"
+            android:strokeColor="#FFFFFFFF"
+            android:strokeLineCap="round" />
+        <path
+            android:fillColor="#FFFFFFFF"
+            android:pathData="M83.4,49.9 L85.6,38.6 L74.6,42.4 Z"
+            android:strokeWidth="1.5"
+            android:strokeColor="#FFFFFFFF"
+            android:strokeLineJoin="round" />
+        <path
+            android:fillColor="#FFFFFFFF"
+            android:pathData="M24.6,58.1 L22.4,69.4 L33.4,65.6 Z"
+            android:strokeWidth="1.5"
+            android:strokeColor="#FFFFFFFF"
+            android:strokeLineJoin="round" />
+        <path
+            android:pathData="M54,36 A18,18 0 1,1 54,72 A18,18 0 1,1 54,36 Z"
+            android:strokeWidth="3"
+            android:strokeColor="#FFFFFFFF" />
+        <path
+            android:pathData="M59.6,47.6 C58.3,45.8 56.4,45.0 54.0,45.0 C50.6,45.0 48.6,46.9 48.6,49.4 C48.6,52.4 51.4,53.2 54.0,53.9 C57.0,54.7 59.6,55.7 59.6,58.7 C59.6,61.4 57.4,63.1 54.0,63.1 C51.2,63.1 49.0,62.1 47.8,60.2 M54,41.2 L54,45 M54,63.1 L54,66.8"
+            android:strokeWidth="3.4"
+            android:strokeColor="#FFFFFFFF"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round" />
+    </group>
+</vector>

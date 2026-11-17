@@ -21,7 +21,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 
 class AndroidAlertNotifier @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
 ) : AlertNotifier {
 
     private val manager = NotificationManagerCompat.from(context)

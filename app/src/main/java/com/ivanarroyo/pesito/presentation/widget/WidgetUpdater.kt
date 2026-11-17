@@ -24,7 +24,7 @@ import kotlin.coroutines.cancellation.CancellationException
  */
 @Singleton
 class WidgetUpdater @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
     private val observeConverterData: ObserveConverterDataUseCase,
     private val observeUserPreferences: ObserveUserPreferencesUseCase,
 ) {
