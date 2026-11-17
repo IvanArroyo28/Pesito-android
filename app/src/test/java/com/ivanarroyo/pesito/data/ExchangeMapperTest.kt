@@ -10,6 +10,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 import java.math.BigDecimal
+import java.time.Instant
 import java.time.LocalDate
 
 class ExchangeMapperTest {
@@ -38,25 +39,26 @@ class ExchangeMapperTest {
             RateDto("2026-11-12", "USD", "BTC", BigDecimal("0.0000102345678912345")),
         )
 
-        val entities = rates.toEntities()
+        val entities = rates.toEntities(fetchedAt = 1_000L)
 
         assertEquals(3, entities.size)
-        assertEquals(RateEntity("USD", "1", "2026-11-13"), entities.last())
+        assertEquals(RateEntity("USD", "1", "2026-11-13", 1_000L), entities.last())
         assertEquals("0.0000102345678912345", entities.first { it.code == "BTC" }.ratePerUsd)
     }
 
     @Test
     fun `entities become a snapshot with the latest date`() {
         val entities = listOf(
-            RateEntity("USD", "1", "2026-11-13"),
-            RateEntity("COP", "3293.28", "2026-11-13"),
-            RateEntity("ARS", "1450.5", "2026-11-12"),
+            RateEntity("USD", "1", "2026-11-13", 2_000L),
+            RateEntity("COP", "3293.28", "2026-11-13", 2_000L),
+            RateEntity("ARS", "1450.5", "2026-11-12", 1_000L),
         )
 
         val snapshot = entities.toSnapshotOrNull()!!
 
         assertEquals(LocalDate.of(2026, 11, 13), snapshot.date)
         assertEquals(BigDecimal("3293.28"), snapshot.ratesPerUsd["COP"])
+        assertEquals(Instant.ofEpochMilli(2_000L), snapshot.updatedAt)
     }
 
     @Test

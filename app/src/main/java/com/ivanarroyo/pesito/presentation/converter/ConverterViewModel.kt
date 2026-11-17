@@ -155,6 +155,7 @@ class ConverterViewModel @Inject constructor(
             result = amount?.let { convertCurrency(data.snapshot, it, from.code, to.code) },
             unitRate = unitRate,
             rateDate = data.snapshot.date,
+            updatedAt = data.snapshot.updatedAt,
             isRefreshing = refresh.isRefreshing,
             isShowingSavedRates = refresh.failure != null,
             favoriteCodes = prefs.favoriteCodes.toSet(),

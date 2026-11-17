@@ -20,4 +20,6 @@ data class RateEntity(
     val ratePerUsd: String,
     /** Fecha de la tasa en formato ISO: "2026-11-13". */
     val date: String,
+    /** Cuándo la descargamos (milisegundos desde 1970). Sirve para mostrar "Actualizado …". */
+    val fetchedAt: Long,
 )

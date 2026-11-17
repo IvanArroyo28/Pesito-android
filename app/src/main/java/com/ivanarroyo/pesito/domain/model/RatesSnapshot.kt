@@ -2,6 +2,7 @@ package com.ivanarroyo.pesito.domain.model
 
 import java.math.BigDecimal
 import java.math.MathContext
+import java.time.Instant
 import java.time.LocalDate
 
 /**
@@ -14,6 +15,8 @@ import java.time.LocalDate
 data class RatesSnapshot(
     val date: LocalDate,
     val ratesPerUsd: Map<String, BigDecimal>,
+    /** Cuándo se descargaron estas tasas. Null si no se sabe. */
+    val updatedAt: Instant? = null,
 ) {
     /** Cuántas unidades de [to] vale 1 unidad de [from]. Null si no tenemos alguna de las dos. */
     fun rate(from: String, to: String): BigDecimal? {

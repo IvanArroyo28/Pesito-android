@@ -5,7 +5,9 @@ import java.math.MathContext
 import java.math.RoundingMode
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
+import java.time.Instant
 import java.time.LocalDate
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
@@ -45,6 +47,13 @@ object MoneyFormat {
 
     private val shortDateFormatter: DateTimeFormatter =
         DateTimeFormatter.ofPattern("d MMM", Locale.forLanguageTag("es-CO"))
+
+    private val dateTimeFormatter: DateTimeFormatter =
+        DateTimeFormatter.ofPattern("d MMM, h:mm a", Locale.forLanguageTag("es-CO"))
+
+    /** "17 nov, 3:42 p. m." en la hora del celular. */
+    fun formatDateTime(instant: Instant, zone: ZoneId = ZoneId.systemDefault()): String =
+        dateTimeFormatter.format(instant.atZone(zone))
 
     /** "13 nov" para los ejes de la gráfica. */
     fun formatShortDate(date: LocalDate): String = shortDateFormatter.format(date)

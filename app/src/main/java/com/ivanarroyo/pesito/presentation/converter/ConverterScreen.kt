@@ -226,6 +226,14 @@ private fun ReadyContent(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
             )
+            state.updatedAt?.let { updatedAt ->
+                Text(
+                    text = stringResource(R.string.updated_at, MoneyFormat.formatDateTime(updatedAt)),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                )
+            }
             TextButton(onClick = { onOpenHistory(state.from.code, state.to.code) }) {
                 Icon(painterResource(R.drawable.ic_show_chart), contentDescription = null)
                 Spacer(Modifier.width(8.dp))

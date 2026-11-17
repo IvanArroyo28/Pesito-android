@@ -11,6 +11,7 @@ import com.ivanarroyo.pesito.domain.model.RatesSnapshot
 import com.ivanarroyo.pesito.domain.repository.ExchangeRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import java.time.Clock
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -21,6 +22,7 @@ import kotlin.coroutines.cancellation.CancellationException
 class ExchangeRepositoryImpl @Inject constructor(
     private val api: FrankfurterApi,
     private val dao: ExchangeDao,
+    private val clock: Clock,
 ) : ExchangeRepository {
 
     override fun observeCurrencies(): Flow<List<Currency>> =
@@ -32,7 +34,7 @@ class ExchangeRepositoryImpl @Inject constructor(
     override suspend fun refresh(): Result<Unit> =
         try {
             val currencies = api.getCurrencies().mapNotNull { it.toEntityOrNull() }
-            val rates = api.getLatestRates().toEntities()
+            val rates = api.getLatestRates().toEntities(fetchedAt = clock.millis())
             // Si la API respondiera vacío, no borramos lo que ya teníamos.
             if (currencies.isNotEmpty() && rates.isNotEmpty()) {
                 dao.replaceAll(currencies, rates)

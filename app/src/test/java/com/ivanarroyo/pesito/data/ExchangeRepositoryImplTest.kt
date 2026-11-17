@@ -16,9 +16,15 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.IOException
 import java.math.BigDecimal
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneOffset
 
 /** Prueba lo más importante de la Fase 3: sin internet, lo guardado NO se pierde. */
 class ExchangeRepositoryImplTest {
+
+    private val now = Instant.parse("2026-11-17T17:00:00Z")
+    private val clock = Clock.fixed(now, ZoneOffset.UTC)
 
     /** Base de datos falsa en memoria. */
     private class FakeDao : ExchangeDao() {
@@ -67,20 +73,21 @@ class ExchangeRepositoryImplTest {
     @Test
     fun `refresh saves currencies and rates`() = runBlocking {
         val dao = FakeDao()
-        val repository = ExchangeRepositoryImpl(FakeApi(), dao)
+        val repository = ExchangeRepositoryImpl(FakeApi(), dao, clock)
 
         val result = repository.refresh()
 
         assertTrue(result.isSuccess)
         assertEquals(listOf("COP", "USD"), repository.observeCurrencies().first().map { it.code })
         assertEquals(BigDecimal("3293.28"), repository.observeLatestRates().first()!!.ratesPerUsd["COP"])
+        assertEquals(now, repository.observeLatestRates().first()!!.updatedAt)
     }
 
     @Test
     fun `without internet the saved rates are kept`() = runBlocking {
         val dao = FakeDao()
         val api = FakeApi()
-        val repository = ExchangeRepositoryImpl(api, dao)
+        val repository = ExchangeRepositoryImpl(api, dao, clock)
         repository.refresh()
 
         api.offline = true
@@ -94,7 +101,7 @@ class ExchangeRepositoryImplTest {
     fun `a new refresh replaces the old rates`() = runBlocking {
         val dao = FakeDao()
         val api = FakeApi()
-        val repository = ExchangeRepositoryImpl(api, dao)
+        val repository = ExchangeRepositoryImpl(api, dao, clock)
         repository.refresh()
 
         api.copRate = "3300.00"

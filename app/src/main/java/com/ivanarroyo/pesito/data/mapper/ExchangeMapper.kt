@@ -7,6 +7,7 @@ import com.ivanarroyo.pesito.data.remote.dto.RateDto
 import com.ivanarroyo.pesito.domain.model.Currency
 import com.ivanarroyo.pesito.domain.model.RatesSnapshot
 import java.math.BigDecimal
+import java.time.Instant
 import java.time.LocalDate
 import java.util.Locale
 
@@ -41,11 +42,11 @@ private fun localizedName(code: String, locale: Locale): String? =
  * Tasas de la API (base USD) → filas para guardar.
  * El dólar no viene en la lista (es la base), así que lo agregamos con tasa 1.
  */
-fun List<RateDto>.toEntities(): List<RateEntity> {
+fun List<RateDto>.toEntities(fetchedAt: Long): List<RateEntity> {
     if (isEmpty()) return emptyList()
     val latestDate = maxOf { it.date } // Las fechas ISO se ordenan bien como texto.
-    return map { RateEntity(it.quote.uppercase(), it.rate.toPlainString(), it.date) } +
-        RateEntity(USD, BigDecimal.ONE.toPlainString(), latestDate)
+    return map { RateEntity(it.quote.uppercase(), it.rate.toPlainString(), it.date, fetchedAt) } +
+        RateEntity(USD, BigDecimal.ONE.toPlainString(), latestDate, fetchedAt)
 }
 
 // ---------------- base de datos → dominio ----------------
@@ -61,5 +62,6 @@ fun List<RateEntity>.toSnapshotOrNull(): RatesSnapshot? {
     return RatesSnapshot(
         date = LocalDate.parse(maxOf { it.date }),
         ratesPerUsd = associate { it.code to BigDecimal(it.ratePerUsd) },
+        updatedAt = Instant.ofEpochMilli(maxOf { it.fetchedAt }),
     )
 }

@@ -8,6 +8,7 @@
     <string name="swap_cd">Intercambiar monedas</string>
     <string name="unit_rate">1 %1$s = %2$s %3$s</string>
     <string name="rate_date">Tasa del %1$s · fuente: Frankfurter</string>
+    <string name="updated_at">Actualizado: %1$s</string>
     <string name="loading_rates">Cargando tasas…</string>
     <string name="error_network">Sin conexión. Revisa tu internet e inténtalo de nuevo.</string>
     <string name="error_generic">No pudimos cargar las tasas. Inténtalo de nuevo.</string>

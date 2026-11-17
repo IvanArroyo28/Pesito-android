@@ -2,6 +2,7 @@ package com.ivanarroyo.pesito.presentation.converter
 
 import com.ivanarroyo.pesito.domain.model.Currency
 import java.math.BigDecimal
+import java.time.Instant
 import java.time.LocalDate
 
 sealed interface ConverterUiState {
@@ -21,6 +22,8 @@ sealed interface ConverterUiState {
         /** Cuánto vale 1 [from] en [to]. */
         val unitRate: BigDecimal,
         val rateDate: LocalDate,
+        /** Cuándo se descargaron por última vez (por la app o por WorkManager). */
+        val updatedAt: Instant? = null,
         /** Se está descargando en segundo plano (muestra el indicador de "jalar para actualizar"). */
         val isRefreshing: Boolean = false,
         /** La última descarga falló: mostramos las tasas guardadas con un aviso. */

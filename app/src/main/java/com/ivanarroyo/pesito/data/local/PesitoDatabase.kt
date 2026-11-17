@@ -5,7 +5,8 @@ import androidx.room.RoomDatabase
 
 @Database(
     entities = [CurrencyEntity::class, RateEntity::class],
-    version = 1,
+    // v2 (Fase 6): se agregó rates.fetchedAt.
+    version = 2,
     exportSchema = false,
 )
 abstract class PesitoDatabase : RoomDatabase() {
