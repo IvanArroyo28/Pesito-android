@@ -25,5 +25,15 @@ sealed interface ConverterUiState {
         val isRefreshing: Boolean = false,
         /** La última descarga falló: mostramos las tasas guardadas con un aviso. */
         val isShowingSavedRates: Boolean = false,
+        /** Para pintar las estrellas en el selector. */
+        val favoriteCodes: Set<String> = emptySet(),
+        /** El monto convertido a cada favorita (sin incluir la moneda de origen). */
+        val favorites: List<FavoriteConversion> = emptyList(),
     ) : ConverterUiState
 }
+
+data class FavoriteConversion(
+    val currency: Currency,
+    /** Null cuando el campo de monto está vacío. */
+    val amount: BigDecimal?,
+)

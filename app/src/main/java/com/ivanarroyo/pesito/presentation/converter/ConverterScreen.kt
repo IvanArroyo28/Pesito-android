@@ -1,6 +1,7 @@
 package com.ivanarroyo.pesito.presentation.converter
 
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,6 +23,7 @@ import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -68,6 +70,7 @@ fun ConverterRoute(viewModel: ConverterViewModel = hiltViewModel()) {
         onToSelected = viewModel::onToSelected,
         onSwap = viewModel::onSwap,
         onRefresh = viewModel::refresh,
+        onToggleFavorite = viewModel::onToggleFavorite,
     )
 }
 
@@ -83,6 +86,7 @@ fun ConverterScreen(
     onToSelected: (String) -> Unit,
     onSwap: () -> Unit,
     onRefresh: () -> Unit,
+    onToggleFavorite: (String) -> Unit,
 ) {
     Scaffold(
         topBar = {
@@ -107,6 +111,7 @@ fun ConverterScreen(
                     onToSelected = onToSelected,
                     onSwap = onSwap,
                     onRefresh = onRefresh,
+                    onToggleFavorite = onToggleFavorite,
                 )
             }
         }
@@ -123,6 +128,7 @@ private fun ReadyContent(
     onToSelected: (String) -> Unit,
     onSwap: () -> Unit,
     onRefresh: () -> Unit,
+    onToggleFavorite: (String) -> Unit,
 ) {
     var pickerTarget by rememberSaveable { mutableStateOf<PickerTarget?>(null) }
     var swapTurns by remember { mutableFloatStateOf(0f) }
@@ -212,6 +218,14 @@ private fun ReadyContent(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
             )
+
+            // ---- Favoritas: el mismo monto en varias monedas de un vistazo ----
+            Spacer(Modifier.size(24.dp))
+            FavoritesSection(
+                favorites = state.favorites,
+                onFavoriteClick = onToSelected,
+            )
+            Spacer(Modifier.size(16.dp))
         }
     }
 
@@ -222,7 +236,74 @@ private fun ReadyContent(
             onSelect = { code ->
                 if (target == PickerTarget.FROM) onFromSelected(code) else onToSelected(code)
             },
+            favoriteCodes = state.favoriteCodes,
+            onToggleFavorite = onToggleFavorite,
             onDismiss = { pickerTarget = null },
+        )
+    }
+}
+
+@Composable
+private fun FavoritesSection(
+    favorites: List<FavoriteConversion>,
+    onFavoriteClick: (String) -> Unit,
+) {
+    Column(Modifier.fillMaxWidth()) {
+        Text(
+            text = stringResource(R.string.favorites_title),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+        )
+        Spacer(Modifier.size(8.dp))
+        if (favorites.isEmpty()) {
+            Text(
+                text = stringResource(R.string.favorites_empty),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            return@Column
+        }
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(20.dp),
+        ) {
+            favorites.forEachIndexed { index, favorite ->
+                if (index > 0) HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+                FavoriteRow(favorite, onClick = { onFavoriteClick(favorite.currency.code) })
+            }
+        }
+    }
+}
+
+/** Una fila: código y nombre a la izquierda, el monto convertido a la derecha. Tocarla la pone como destino. */
+@Composable
+private fun FavoriteRow(favorite: FavoriteConversion, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(
+                text = favorite.currency.code,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+            )
+            Text(
+                text = favorite.currency.name,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        Spacer(Modifier.width(12.dp))
+        Text(
+            text = favorite.amount?.let { "${favorite.currency.symbol} ${MoneyFormat.format(it)}" } ?: "—",
+            style = MaterialTheme.typography.titleMedium,
+            textAlign = TextAlign.End,
         )
     }
 }
@@ -354,6 +435,8 @@ private fun ConverterReadyPreview() {
                 unitRate = BigDecimal("3293.28"),
                 rateDate = LocalDate.of(2026, 11, 13),
                 isShowingSavedRates = true,
+                favoriteCodes = setOf("EUR"),
+                favorites = listOf(FavoriteConversion(previewCurrencies[2], BigDecimal("86.00"))),
             ),
             amountText = "100",
             onAmountChange = {},
@@ -361,6 +444,7 @@ private fun ConverterReadyPreview() {
             onToSelected = {},
             onSwap = {},
             onRefresh = {},
+            onToggleFavorite = {},
         )
     }
 }
@@ -377,6 +461,7 @@ private fun ConverterErrorPreview() {
             onToSelected = {},
             onSwap = {},
             onRefresh = {},
+            onToggleFavorite = {},
         )
     }
 }

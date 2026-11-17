@@ -5,10 +5,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.ivanarroyo.pesito.domain.model.UserPreferences
 import com.ivanarroyo.pesito.domain.usecase.ConvertCurrencyUseCase
 import com.ivanarroyo.pesito.domain.usecase.ConverterData
 import com.ivanarroyo.pesito.domain.usecase.ObserveConverterDataUseCase
+import com.ivanarroyo.pesito.domain.usecase.ObserveUserPreferencesUseCase
 import com.ivanarroyo.pesito.domain.usecase.RefreshRatesUseCase
+import com.ivanarroyo.pesito.domain.usecase.SaveLastPairUseCase
+import com.ivanarroyo.pesito.domain.usecase.ToggleFavoriteUseCase
 import com.ivanarroyo.pesito.presentation.util.AmountInput
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -16,6 +20,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -26,8 +31,11 @@ import javax.inject.Inject
 @HiltViewModel
 class ConverterViewModel @Inject constructor(
     observeConverterData: ObserveConverterDataUseCase,
+    private val observeUserPreferences: ObserveUserPreferencesUseCase,
     private val refreshRates: RefreshRatesUseCase,
     private val convertCurrency: ConvertCurrencyUseCase,
+    private val toggleFavorite: ToggleFavoriteUseCase,
+    private val saveLastPair: SaveLastPairUseCase,
 ) : ViewModel() {
 
     /**
@@ -38,22 +46,25 @@ class ConverterViewModel @Inject constructor(
         private set
 
     private val amount = MutableStateFlow(AmountInput.parse(DEFAULT_AMOUNT))
-    private val fromCode = MutableStateFlow(DEFAULT_FROM)
-    private val toCode = MutableStateFlow(DEFAULT_TO)
+
+    /** El par elegido. Null hasta leer de DataStore el último que usó la persona. */
+    private val selection = MutableStateFlow<Selection?>(null)
+
     private val refreshState = MutableStateFlow(RefreshState(isRefreshing = true))
     private var refreshJob: Job? = null
 
     val uiState: StateFlow<ConverterUiState> =
         combine(
-            observeConverterData(), // lo guardado en Room
-            refreshState,           // cómo va la descarga
-            fromCode,
-            toCode,
+            observeConverterData(),   // tasas guardadas en Room
+            observeUserPreferences(), // favoritas guardadas en DataStore
+            refreshState,             // cómo va la descarga
+            selection,
             amount,
-        ) { data, refresh, from, to, amount ->
+        ) { data, prefs, refresh, selection, amount ->
             when {
+                selection == null -> ConverterUiState.Loading
                 // Hay datos guardados: SIEMPRE los mostramos, haya internet o no.
-                data != null -> buildReady(data, refresh, from, to, amount)
+                data != null -> buildReady(data, prefs, refresh, selection, amount)
                 refresh.failure != null -> ConverterUiState.Error(refresh.failure == Failure.NETWORK)
                 else -> ConverterUiState.Loading
             }
@@ -64,6 +75,11 @@ class ConverterViewModel @Inject constructor(
         )
 
     init {
+        viewModelScope.launch {
+            // Abrimos la app en el último par que usó la persona.
+            val prefs = observeUserPreferences().first()
+            selection.value = Selection(prefs.lastFrom, prefs.lastTo)
+        }
         refresh()
     }
 
@@ -85,31 +101,52 @@ class ConverterViewModel @Inject constructor(
     }
 
     fun onFromSelected(code: String) {
-        if (code == toCode.value) onSwap() else fromCode.value = code
+        val current = selection.value ?: return
+        if (code == current.to) onSwap() else updateSelection(current.copy(from = code))
     }
 
     fun onToSelected(code: String) {
-        if (code == fromCode.value) onSwap() else toCode.value = code
+        val current = selection.value ?: return
+        if (code == current.from) onSwap() else updateSelection(current.copy(to = code))
     }
 
     fun onSwap() {
-        val oldFrom = fromCode.value
-        fromCode.value = toCode.value
-        toCode.value = oldFrom
+        val current = selection.value ?: return
+        updateSelection(Selection(from = current.to, to = current.from))
+    }
+
+    fun onToggleFavorite(code: String) {
+        viewModelScope.launch { toggleFavorite(code) }
+    }
+
+    private fun updateSelection(new: Selection) {
+        selection.value = new
+        viewModelScope.launch { saveLastPair(new.from, new.to) }
     }
 
     private fun buildReady(
         data: ConverterData,
+        prefs: UserPreferences,
         refresh: RefreshState,
-        fromCode: String,
-        toCode: String,
+        selection: Selection,
         amount: BigDecimal?,
     ): ConverterUiState {
         val currencies = data.currencies
-        val from = currencies.firstOrNull { it.code == fromCode } ?: currencies.first()
-        val to = currencies.firstOrNull { it.code == toCode } ?: currencies.first()
+        val byCode = currencies.associateBy { it.code }
+        val from = byCode[selection.from] ?: currencies.first()
+        val to = byCode[selection.to] ?: currencies.first()
         val unitRate = convertCurrency(data.snapshot, BigDecimal.ONE, from.code, to.code)
             ?: return ConverterUiState.Error(isNetwork = false)
+
+        val favorites = prefs.favoriteCodes
+            .filter { it != from.code }      // no tiene sentido convertir USD → USD
+            .mapNotNull { byCode[it] }       // ignora favoritas sin tasa hoy
+            .map { currency ->
+                FavoriteConversion(
+                    currency = currency,
+                    amount = amount?.let { convertCurrency(data.snapshot, it, from.code, currency.code) },
+                )
+            }
 
         return ConverterUiState.Ready(
             currencies = currencies,
@@ -120,8 +157,12 @@ class ConverterViewModel @Inject constructor(
             rateDate = data.snapshot.date,
             isRefreshing = refresh.isRefreshing,
             isShowingSavedRates = refresh.failure != null,
+            favoriteCodes = prefs.favoriteCodes.toSet(),
+            favorites = favorites,
         )
     }
+
+    private data class Selection(val from: String, val to: String)
 
     private enum class Failure { NETWORK, OTHER }
 
@@ -132,7 +173,5 @@ class ConverterViewModel @Inject constructor(
 
     companion object {
         const val DEFAULT_AMOUNT = "1"
-        const val DEFAULT_FROM = "USD"
-        const val DEFAULT_TO = "COP"
     }
 }

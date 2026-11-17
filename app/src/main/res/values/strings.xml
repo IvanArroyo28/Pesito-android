@@ -21,4 +21,11 @@
     <string name="picker_all">Todas</string>
     <string name="picker_empty">No encontramos \"%1$s\"</string>
     <string name="clear_cd">Borrar búsqueda</string>
+    <string name="picker_favorites">Favoritas</string>
+    <string name="favorite_add_cd">Agregar a favoritas</string>
+    <string name="favorite_remove_cd">Quitar de favoritas</string>
+
+    <!-- Favoritas en la pantalla principal -->
+    <string name="favorites_title">Tus favoritas</string>
+    <string name="favorites_empty">Toca la ★ junto a una moneda en el selector para verla aquí.</string>
 </resources>

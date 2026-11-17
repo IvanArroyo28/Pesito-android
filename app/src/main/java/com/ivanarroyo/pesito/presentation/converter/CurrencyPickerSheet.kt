@@ -43,12 +43,18 @@ fun CurrencyPickerSheet(
     currencies: List<Currency>,
     selectedCode: String,
     onSelect: (String) -> Unit,
+    favoriteCodes: Set<String>,
+    onToggleFavorite: (String) -> Unit,
     onDismiss: () -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
     var query by rememberSaveable { mutableStateOf("") }
 
+    // Las favoritas van arriba del todo para encontrarlas rápido.
+    val favorites = remember(currencies, favoriteCodes) {
+        currencies.filter { it.code in favoriteCodes }
+    }
     val popular = remember(currencies) {
         currencies.filter { it.code in ObserveConverterDataUseCase.POPULAR }
     }
@@ -94,11 +100,26 @@ fun CurrencyPickerSheet(
         }
 
         LazyColumn(Modifier.fillMaxWidth()) {
+            // Una moneda puede salir en dos secciones (favorita y popular),
+            // así que cada key lleva el nombre de la sección para no repetirse.
+            val row: @Composable (Currency) -> Unit = {
+                CurrencyRow(
+                    currency = it,
+                    selected = it.code == selectedCode,
+                    isFavorite = it.code in favoriteCodes,
+                    onClick = pick,
+                    onToggleFavorite = onToggleFavorite,
+                )
+            }
             if (query.isBlank()) {
+                if (favorites.isNotEmpty()) {
+                    item(key = "header_favorites") { SectionHeader(stringResource(R.string.picker_favorites)) }
+                    items(favorites, key = { "fav_${it.code}" }) { row(it) }
+                }
                 item(key = "header_popular") { SectionHeader(stringResource(R.string.picker_popular)) }
-                items(popular, key = { it.code }) { CurrencyRow(it, it.code == selectedCode, pick) }
+                items(popular, key = { "pop_${it.code}" }) { row(it) }
                 item(key = "header_all") { SectionHeader(stringResource(R.string.picker_all)) }
-                items(others, key = { it.code }) { CurrencyRow(it, it.code == selectedCode, pick) }
+                items(others, key = { "all_${it.code}" }) { row(it) }
             } else if (results.isEmpty()) {
                 item(key = "empty") {
                     Text(
@@ -108,7 +129,7 @@ fun CurrencyPickerSheet(
                     )
                 }
             } else {
-                items(results, key = { it.code }) { CurrencyRow(it, it.code == selectedCode, pick) }
+                items(results, key = { "res_${it.code}" }) { row(it) }
             }
         }
     }
@@ -125,12 +146,18 @@ private fun SectionHeader(text: String) {
 }
 
 @Composable
-private fun CurrencyRow(currency: Currency, selected: Boolean, onClick: (String) -> Unit) {
+private fun CurrencyRow(
+    currency: Currency,
+    selected: Boolean,
+    isFavorite: Boolean,
+    onClick: (String) -> Unit,
+    onToggleFavorite: (String) -> Unit,
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onClick(currency.code) }
-            .padding(horizontal = 16.dp, vertical = 14.dp),
+            .padding(start = 16.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
@@ -151,6 +178,15 @@ private fun CurrencyRow(currency: Currency, selected: Boolean, onClick: (String)
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+        IconButton(onClick = { onToggleFavorite(currency.code) }) {
+            Icon(
+                painter = painterResource(if (isFavorite) R.drawable.ic_star else R.drawable.ic_star_border),
+                contentDescription = stringResource(
+                    if (isFavorite) R.string.favorite_remove_cd else R.string.favorite_add_cd,
+                ),
+                tint = if (isFavorite) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }
 
